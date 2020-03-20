@@ -1,28 +1,36 @@
 import os, time, itertools, pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.image import imsave
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+
 # G(z)
 def generator(x):
     # initializers
     w_init = tf.truncated_normal_initializer(mean=0, stddev=0.02)
     b_init = tf.constant_initializer(0.)
     # 1st hidden layer
-    w0 = tf.get_variable('G_w0', [x.get_shape()[1], 128], initializer=w_init)
-    b0 = tf.get_variable('G_b0', [128], initializer=b_init)
+    w0 = tf.get_variable('G_w0', [x.get_shape()[1], 256], initializer=w_init)
+    b0 = tf.get_variable('G_b0', [256], initializer=b_init)
     h0 = tf.nn.relu(tf.matmul(x, w0) + b0)
 
     ### Code:ToDo (Change the architecture as CW2 Guidance required)
+
+    w2 = tf.get_variable('G_w2', [h0.get_shape()[1], 512], initializer=w_init)
+    b2 = tf.get_variable('G_b2', [512], initializer=b_init)
+    h2 = tf.nn.relu(tf.matmul(h0, w2) + b2)
+
+    w3 = tf.get_variable('G_w3', [h2.get_shape()[1], 1024], initializer=w_init)
+    b3 = tf.get_variable('G_b3', [1024], initializer=b_init)
+    h3 = tf.nn.relu(tf.matmul(h2, w3) + b3)
     
     # output hidden layer
-    w1 = tf.get_variable('G_w1', [h0.get_shape()[1], 784], initializer=w_init)
+    w1 = tf.get_variable('G_w1', [h3.get_shape()[1], 784], initializer=w_init)
     b1 = tf.get_variable('G_b1', [784], initializer=b_init)
-    o = tf.nn.tanh(tf.matmul(h0, w1) + b1)
-
-
+    o = tf.nn.tanh(tf.matmul(h3, w1) + b1)
     return o
-    
+
 
 # D(x)
 def discriminator(x, drop_out):
@@ -32,19 +40,38 @@ def discriminator(x, drop_out):
 
     ###  Code: ToDO( Change the architecture as CW2 Guidance required)
     # 1st hidden layer
-    w0 = tf.get_variable('D_w0', [x.get_shape()[1], 784], initializer=w_init)
-    b0 = tf.get_variable('D_b0', [784], initializer=b_init)
+    w0 = tf.get_variable('D_w0', [x.get_shape()[1], 1024], initializer=w_init)
+    b0 = tf.get_variable('D_b0', [1024], initializer=b_init)
     h0 = tf.nn.relu(tf.matmul(x, w0) + b0)
+    drop0 = tf.nn.dropout(h0, drop_out)
+
+
+    w2 = tf.get_variable('D_w2', [drop0.get_shape()[1], 512], initializer=w_init)
+    b2 = tf.get_variable('D_b2', [512], initializer=b_init)
+    h2 = tf.nn.relu(tf.matmul(drop0, w2) + b2)
+    drop2 = tf.nn.dropout(h2, drop_out)
+
+    w3 = tf.get_variable('D_w3', [drop2.get_shape()[1], 256], initializer=w_init)
+    b3 = tf.get_variable('D_b3', [256], initializer=b_init)
+    h3 = tf.nn.relu(tf.matmul(drop2, w3) + b3)
+    drop3 = tf.nn.dropout(h3, drop_out)
+
     # output layer
-    w1 = tf.get_variable('D_w1', [h0.get_shape()[1], 1], initializer=w_init)
+    w1 = tf.get_variable('D_w1', [drop3.get_shape()[1], 1], initializer=w_init)
     b1 = tf.get_variable('D_b1', [1], initializer=b_init)
-    o = tf.sigmoid(tf.matmul(h0, w1) + b1)
+    h1 = tf.sigmoid(tf.matmul(drop3, w1) + b1)
+    o = tf.nn.dropout(h1, drop_out)
     
     return o
+
 
 def show_result(num_epoch, show = False, save = False, path = 'result.png'):
     z_ = np.random.normal(0, 1, (25, 100))    # z_ is the input of generator, every epochs will random produce input
     ##Code:ToDo complete the rest of part
+    plt.imshow(z_)
+    plt.show()
+    imsave(path, z_)
+
 
 def show_train_hist(hist, show = False, save = False, path = 'Train_hist.png'):
     x = range(len(hist['D_losses']))
@@ -70,10 +97,11 @@ def show_train_hist(hist, show = False, save = False, path = 'Train_hist.png'):
     else:
         plt.close()
 
+
 # training parameters
 batch_size = 100
 lr = 0.0002
-train_epoch = 100
+train_epoch = 3
 
 # load MNIST
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -144,9 +172,8 @@ for epoch in range(train_epoch):
     print('[%d/%d] - ptime: %.2f loss_d: %.3f, loss_g: %.3f' % ((epoch + 1), train_epoch, per_epoch_ptime, np.mean(D_losses), np.mean(G_losses)))
 
     ### Code: TODO Code complete show_result function)
-    ###p = 'MNIST_GAN_results/results/MNIST_GAN_' + str(epoch + 1) + '.png'
-    ###show_result((epoch + 1), save=True, path=p)
-
+    p = 'MNIST_GAN_results/results/MNIST_GAN_' + str(epoch + 1) + '.png'
+    show_result((epoch + 1), save=True, path=p)
 
     train_hist['D_losses'].append(np.mean(D_losses))
     train_hist['G_losses'].append(np.mean(G_losses))
