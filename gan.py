@@ -37,7 +37,6 @@ def discriminator(x, drop_out):
     # initializers
     w_init = tf.truncated_normal_initializer(mean=0, stddev=0.02)
     b_init = tf.constant_initializer(0.)
-    drop_out = 1 - drop_out
     ###  Code: ToDO( Change the architecture as CW2 Guidance required)
     # 1st hidden layer
 
@@ -45,7 +44,6 @@ def discriminator(x, drop_out):
     b0 = tf.get_variable('D_b0', [1024], initializer=b_init)
     h0 = tf.nn.leaky_relu(tf.matmul(x, w0) + b0)
     drop0 = tf.nn.dropout(h0, rate=drop_out)
-
 
     w2 = tf.get_variable('D_w2', [drop0.get_shape()[1], 512], initializer=w_init)
     b2 = tf.get_variable('D_b2', [512], initializer=b_init)
@@ -157,7 +155,7 @@ tf.global_variables_initializer().run()
 if not os.path.isdir('MNIST_GAN_results'):
     os.mkdir('MNIST_GAN_results')
 if not os.path.isdir('MNIST_GAN_results/results'):
-    os.mkdir('MNIST_GAN_sree_results/results')
+    os.mkdir('MNIST_GAN_results/results')
 train_hist = {}
 train_hist['D_losses'] = []
 train_hist['G_losses'] = []
@@ -188,7 +186,7 @@ for epoch in range(train_epoch):
     print('[%d/%d] - ptime: %.2f loss_d: %.3f, loss_g: %.3f' % ((epoch + 1), train_epoch, per_epoch_ptime, np.mean(D_losses), np.mean(G_losses)))
 
     ### Code: TODO Code complete show_result function)
-    p = 'MNIST_GAN_sree_results/results/MNIST_GAN_' + str(epoch + 1) + '.png'
+    p = 'MNIST_GAN_results/results/MNIST_GAN_' + str(epoch + 1) + '.png'
     show_result((epoch + 1), save=True, path=p, show=False)
 
     train_hist['D_losses'].append(np.mean(D_losses))
@@ -199,8 +197,17 @@ total_ptime = end_time - start_time
 train_hist['total_ptime'].append(total_ptime)
 print('Avg per epoch ptime: %.2f, total %d epochs ptime: %.2f' % (np.mean(train_hist['per_epoch_ptimes']), train_epoch, total_ptime))
 print("Training finish!... save training results")
-with open('MNIST_GAN_sree_results/train_hist.pkl', 'wb') as f:
+with open('MNIST_GAN_results/train_hist.pkl', 'wb') as f:
     pickle.dump(train_hist, f)
-show_train_hist(train_hist, save=True, path='MNIST_GAN_sree_results/MNIST_GAN_train_hist.png')
-images = []
+show_train_hist(train_hist, save=True, path='MNIST_GAN_results/MNIST_GAN_train_hist.png')
 sess.close()
+
+
+
+# batch size 100
+# [100/100] - ptime: 41.75 loss_d: 1.221, loss_g: 0.901
+# Avg per epoch ptime: 50.13, total 100 epochs ptime: 5405.01
+
+# batch size 256
+# [100/100] - ptime: 41.08 loss_d: 0.958, loss_g: 1.355
+# Avg per epoch ptime: 33.81, total 100 epochs ptime: 3728.94
