@@ -8,7 +8,7 @@ The graph represent the `cost` of Genearator and Discriminator for each epoch.
 
 ![graph_cost](/MNIST_GAN_results/MNIST_GAN_train_hist.png)
 
-## Genearted Image
+## Generated Image
 
 ![generated_image](/MNIST_GAN_results/results/MNIST_GAN_99.png)
 
